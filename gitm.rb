@@ -29,10 +29,10 @@ end
 case args[0]
 when "push"
   log "Intercepted push command"
-  repos.each { |name, _| system "git push #{name} #{branch}" }
+  repos.each { |name, _| system "git push #{name} #{branch}", *args[1...] }
 when "init"
   log "Intercepted init command"
-  system "git init"
+  system "git init", *args[1...]
   repos.each { |name, repo| system "git remote add #{name} #{repo}" }
   system "git fetch origin"
   system "git checkout master"
