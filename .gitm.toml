@@ -1,3 +1,4 @@
 [repos]
 origin = "ssh://git@192.168.100.62:2222/Arsen6331/gitm.git"
 gitlab = "git@gitlab.com:moussaelianarsen/gitm.git"
+github = "git@github.com:Arsen6331/gitm.git"
