@@ -1,11 +1,11 @@
 # Gitm
-Automatic git mirroring script.
+Automatic git mirroring program.
 
 ### How it works
-This is a simple script that intercepts commands like `git init` and `git push` and automatically configures and pushes to many different remotes.
+This is a simple program that intercepts commands like `git init` and `git push` and automatically configures and pushes to many different remotes.
 
 ### Usage
-To use this script, create a file called `.gitm.toml` and populate it with repositories like so:
+To use this program, create a file called `.gitm.toml` and populate it with repositories like so:
 ```toml
 [repos]
 origin = "https://gitea.arsenm.dev/Arsen6331/gitm.git"
