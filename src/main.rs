@@ -15,9 +15,13 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{collections::HashMap, env, process::{Command, Child, exit}};
 use serde_derive::Deserialize;
 use std::fs;
+use std::{
+    collections::HashMap,
+    env,
+    process::{exit, Child, Command},
+};
 use toml;
 
 #[macro_use]
@@ -45,17 +49,17 @@ fn main() {
         .filter_level(log::LevelFilter::Info)
         .format_timestamp(None)
         .init();
-    
+
     // Get config contents
     let cfg_contents = fs::read_to_string(CFG_NAME).log_err("Error reading file");
-    
+
     // Decode config contents
     let config: Config = toml::from_str(&cfg_contents).unwrap_or_default();
 
     // If no repos provided, error and exit
     if config.repos.len() < 1 {
         error!("Please add repos to the {} file", CFG_NAME);
-        exit(1)
+        exit(1);
     }
 
     // If origin repo is not defined, error and exit
@@ -63,14 +67,16 @@ fn main() {
         error!("Origin repo required in {} file", CFG_NAME);
         exit(1);
     }
-    
+
     // Collect arguments into vector
     let args: Vec<String> = env::args().collect();
 
     // If no arguments provided
     if args.len() < 2 {
         // Run git --help
-        let mut proc = Command::new("git").arg("--help").spawn()
+        let mut proc = Command::new("git")
+            .arg("--help")
+            .spawn()
             .log_err("Error running git command");
         exit_if_code_nonzero(&mut proc);
     }
@@ -92,11 +98,14 @@ fn main() {
                     .log_err("Error running git command");
                 exit_if_code_nonzero(&mut proc);
             }
-        },
+        }
         "init" => {
             info!("Intercepted init command");
             // Run git init with any preceding arguments
-            let mut proc = Command::new("git").arg("init").args(&args[2..]).spawn()
+            let mut proc = Command::new("git")
+                .arg("init")
+                .args(&args[2..])
+                .spawn()
                 .log_err("Error running git command");
             exit_if_code_nonzero(&mut proc);
             // For every repo in config
@@ -109,18 +118,24 @@ fn main() {
                 exit_if_code_nonzero(&mut proc);
             }
             // Run git fetch origin
-            proc = Command::new("git").args(&["fetch", "origin"]).spawn()
+            proc = Command::new("git")
+                .args(&["fetch", "origin"])
+                .spawn()
                 .log_err("Error running git command");
             exit_if_code_nonzero(&mut proc);
             // Run git checkout master
-            proc = Command::new("git").args(&["checkout", "master"]).spawn()
+            proc = Command::new("git")
+                .args(&["checkout", "master"])
+                .spawn()
                 .log_err("Error running git command");
             exit_if_code_nonzero(&mut proc);
-        },
+        }
         // Default
         _ => {
             // Run git, passing through all arguments provided
-            let mut proc = Command::new("git").args(&args[1..]).spawn()
+            let mut proc = Command::new("git")
+                .args(&args[1..])
+                .spawn()
                 .log_err("Error running git command");
             exit_if_code_nonzero(&mut proc);
         }
@@ -139,28 +154,30 @@ fn exit_if_code_nonzero(proc: &mut Child) {
     }
 }
 
-// Trait LogErr allows user-friendly error messages 
+// Trait LogErr allows user-friendly error messages
 trait LogErr<T> {
     fn log_err(self, msg: &str) -> T;
 }
 
 // Implement LogErr on Result of any type where E implements Debug
-impl<T, E> LogErr<T> for Result<T, E> where E: ::std::fmt::Debug {
+impl<T, E> LogErr<T> for Result<T, E>
+where
+    E: ::std::fmt::Debug,
+{
     // log_err unwraps Result, logging error and exiting if needed
     fn log_err(self, msg: &str) -> T {
         match self {
             // If no error
             Ok(res) => {
                 // Return value within Result
-                return res
+                return res;
             }
             // If error
             Err(err) => {
                 // Log error in format "message: error" and exit
                 error!("{}: {:?}", msg, err);
                 exit(1)
-            },
+            }
         }
     }
 }
-
