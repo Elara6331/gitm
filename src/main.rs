@@ -79,6 +79,7 @@ fn main() {
             .spawn()
             .log_err("Error running git command");
         exit_if_code_nonzero(&mut proc);
+        exit(0);
     }
 
     // Ensure options exists in config, otherwise set to default
