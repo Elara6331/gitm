@@ -20,6 +20,7 @@ use std::fs;
 use std::{
     collections::HashMap,
     env,
+    path::Path,
     process::{exit, Child, Command},
 };
 use toml;
@@ -50,26 +51,21 @@ fn main() {
         .format_timestamp(None)
         .init();
 
+    // Collect arguments into vector
+    let args: Vec<String> = env::args().collect();
+
+    // If config does not exist
+    if !Path::new(CFG_NAME).exists() {
+        // Pass arguments to git
+        default_git(&args[1..]);
+        exit(0);
+    }
+
     // Get config contents
     let cfg_contents = fs::read_to_string(CFG_NAME).log_err("Error reading file");
 
     // Decode config contents
     let config: Config = toml::from_str(&cfg_contents).unwrap_or_default();
-
-    // If no repos provided, error and exit
-    if config.repos.len() < 1 {
-        error!("Please add repos to the {} file", CFG_NAME);
-        exit(1);
-    }
-
-    // If origin repo is not defined, error and exit
-    if config.repos.get("origin").is_none() {
-        error!("Origin repo required in {} file", CFG_NAME);
-        exit(1);
-    }
-
-    // Collect arguments into vector
-    let args: Vec<String> = env::args().collect();
 
     // If no arguments provided
     if args.len() < 2 {
@@ -89,6 +85,8 @@ fn main() {
     match args[1].as_str() {
         "push" => {
             info!("Intercepted push command");
+            // Ensure that required repos exist
+            ensure_repos(&config.repos);
             // For every repo in config
             for (name, _) in config.repos {
                 // Run git push with applicable arguments
@@ -102,6 +100,8 @@ fn main() {
         }
         "init" => {
             info!("Intercepted init command");
+            // Ensure that required repos exist
+            ensure_repos(&config.repos);
             // Run git init with any preceding arguments
             let mut proc = Command::new("git")
                 .arg("init")
@@ -132,14 +132,30 @@ fn main() {
             exit_if_code_nonzero(&mut proc);
         }
         // Default
-        _ => {
-            // Run git, passing through all arguments provided
-            let mut proc = Command::new("git")
-                .args(&args[1..])
-                .spawn()
-                .log_err("Error running git command");
-            exit_if_code_nonzero(&mut proc);
-        }
+        _ => default_git(&args[1..]),
+    }
+}
+
+fn default_git(args: &[String]) {
+    // Run git, passing through all arguments provided
+    let mut proc = Command::new("git")
+        .args(&args[..])
+        .spawn()
+        .log_err("Error running git command");
+    exit_if_code_nonzero(&mut proc);
+}
+
+fn ensure_repos(repos: &HashMap<String, String>) {
+    // If no repos provided, error and exit
+    if repos.len() < 1 {
+        error!("Please add repos to the {} file", CFG_NAME);
+        exit(1);
+    }
+
+    // If origin repo is not defined, error and exit
+    if repos.get("origin").is_none() {
+        error!("Origin repo required in {} file", CFG_NAME);
+        exit(1);
     }
 }
 
